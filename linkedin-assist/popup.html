@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { font: 13px/1.4 system-ui, sans-serif; width: 340px; margin: 0; padding: 14px; color: #1d2226; }
+  h1 { font-size: 15px; margin: 0 0 10px; }
+  label { display: block; font-weight: 600; margin: 10px 0 4px; }
+  input[type=text], input[type=number], textarea { width: 100%; box-sizing: border-box; padding: 6px; border: 1px solid #c7c7c7; border-radius: 4px; font: inherit; }
+  textarea { height: 70px; resize: vertical; }
+  .row { display: flex; gap: 6px; margin-top: 6px; }
+  button { padding: 6px 10px; border: 1px solid #0a66c2; background: #fff; color: #0a66c2; border-radius: 14px; cursor: pointer; font: inherit; font-weight: 600; }
+  button.primary { background: #0a66c2; color: #fff; }
+  button:disabled { opacity: .5; cursor: default; }
+  .hint { color: #666; font-size: 12px; }
+  .stats { margin-top: 12px; padding: 8px; background: #f3f6f8; border-radius: 6px; }
+  .msg { margin-top: 8px; font-size: 12px; }
+  .err { color: #b3261e; }
+  .ok { color: #057642; }
+</style>
+</head>
+<body>
+  <h1>LinkedIn Assist</h1>
+
+  <label for="sheet">Google Sheet URL</label>
+  <input type="text" id="sheet" placeholder="https://docs.google.com/spreadsheets/d/...">
+  <div class="row">
+    <button id="load">Load sheet</button>
+    <button id="upload">Or upload CSV…</button>
+    <input type="file" id="file" accept=".csv,text/csv" hidden>
+  </div>
+  <div class="hint">Needs a <b>linkedin_url</b> column. Optional: <b>note</b> (used as-is), first_name, company, title, or any other column for the template.</div>
+
+  <label for="template">Note template (when a row has no note)</label>
+  <textarea id="template"></textarea>
+  <div class="hint">Use {first_name}, {company}, or any column name in braces. Max 300 characters.</div>
+
+  <label for="cap">Daily limit</label>
+  <input type="number" id="cap" min="1" max="100">
+
+  <div class="stats" id="stats"></div>
+  <div class="row">
+    <button class="primary" id="start">Start</button>
+    <button id="stop">Stop</button>
+    <button id="export">Export results</button>
+    <button id="clear">Clear</button>
+  </div>
+  <div class="msg" id="msg"></div>
+
+  <script src="shared.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
