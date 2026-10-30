@@ -122,13 +122,15 @@ named as the decision-maker, or re-open on the timing from the loss reason.
 
 ### 7. Write to the sheet
 Two tabs:
-- **Net-new contacts** (append): `Priority | Rep | Account play | Company | Contact | Title |
+- **Net-new contacts** (append): `Priority | Rep | Account play | Company | Contact | LinkedIn URL | Title |
   In role since | Email | Buyer views (90d) | Buyer cos (90d) | AI-assistant visits (90d) |
   Reviews | Category rank | 1. LinkedIn connection note | 2. LinkedIn DM | 3. Email subject |
   3. Email body | Status`. Write the Contact cell as `=HYPERLINK("<linkedin url>","<Name>")`
   using `update_formulas`. With no URL, link a LinkedIn people search
   (`https://www.linkedin.com/search/results/people/?keywords=<Name> <Company>`) labelled
-  "<Name> (search)". Rep: account owner; "Salesforce Notifications" means `UNASSIGNED`.
+  "<Name> (search)". Also put the visible URL in **LinkedIn URL** (`=HYPERLINK(url, url-without-https)`).
+  If ZoomInfo has no URL, web-search `"<Name>" <Company> site:linkedin.com/in` first; if the profile
+  suggests they've moved on, add "⚠ VERIFY" to the Title. If still nothing: "Not found on LinkedIn – reach by email". Rep: account owner; "Salesforce Notifications" means `UNASSIGNED`.
   Status: `Not sent`.
 - **Account briefs** (append or update the row for that company): `Company | Rep | Account play |
   Target list | Salesforce opportunities | Last real conversation | Already in Salesforce
