@@ -24,7 +24,7 @@ If any is missing, stop and say which one.
 |---|---|
 | Companies per run | 10 |
 | Contacts per company | 2 (one "A" priority, one "B") |
-| Output sheet | `1L3Zsx6FJehntkxH0czKJXfDETeJ3cFIZaTcRgBdsOsU`, tab `Net-new pilot` |
+| Output sheet | `1L3Zsx6FJehntkxH0czKJXfDETeJ3cFIZaTcRgBdsOsU`, tabs `Net-new contacts` + `Account briefs` |
 | Traffic window | last 90 days |
 
 ## Target definition (agreed with the team, keep it simple)
@@ -42,7 +42,7 @@ AMD), and anything that isn't a B2B software vendor. Say which ones you skipped 
 ## Workflow
 
 ### 1. Load what's already been done
-Read the sheet's `Company` column (B) and keep the list for the exclusion filter.
+Read the `Company` column of the `Net-new contacts` tab and keep the list for the exclusion filter.
 
 ### 2. Pull and score candidates
 Run **Query 1** in `queries.sql`, filling in the exclusion list. It returns traffic, AI traffic
@@ -67,11 +67,9 @@ Analyst Relations → Head/VP/Sr Director Product Marketing → CMO. The **B** c
 or a second PMM. Prefer someone new in role (position start in the last ~6 months), since
 that's a natural opener.
 
-Then run **Query 3** to check those names against Salesforce contacts:
-- Salesforce activity in the last 14 days → priority `HOLD`, flag "Active in Salesforce <date>
-  – coordinate with <owner> before any outreach", leave messages blank, **don't enrich**
-  (reuse the Salesforce LinkedIn URL)
-- In Salesforce but quiet → flag "Already a Salesforce contact (no recent activity)"
+**Contacts must be net-new.** Run **Query 3** before enriching. Drop anyone who appears at this
+company as a Salesforce **contact or lead** (any status), or as an external participant on a Gong
+call, and pick the next candidate. Pull 10–15 candidates per company in ZoomInfo so you have spares.
 
 Enrich only the remaining contacts with `enrich_contacts` (batches of ≤10, `personId`,
 `requiredFields`: firstName, lastName, jobTitle, companyName, email, externalUrls,
@@ -106,21 +104,39 @@ Rules:
 - Say "last 90 days" / "last quarter" for traffic and "on PeerSpot" for ranks.
 - Plain, peer-to-peer tone. No hype words, no emojis.
 
-### 6. Append to the sheet
-Append rows after the last used row of `Net-new pilot`, in this column order:
+Also write an **email** version (subject + short body: the hook, the marketplace line, a
+20-minute ask; no signature).
 
-`Priority | Company | Target list | SF Owner | Products listed | Buyer views (90d) |
-Buyer companies (90d) | AI-assistant referrals (90d) | AI crawler reads (90d) | Total reviews |
-Category rank (<month>) | Contact | Title | In role since | LinkedIn | Email | Flag |
-LinkedIn connection note (≤300) | Follow-up DM | Status`
+### 6. Account brief (Salesforce status)
+For each company, run **Query 4** and summarize: every opportunity (stage, amount, close date,
+loss reason, last next step), the last real conversation (Gong calls, with external attendees and
+AI summary/next steps), who's already in Salesforce, and how much automated email they're
+getting. Set the **Account play**:
+- `Fresh`: no opportunity in the last 2 years
+- `Re-engage (lost <month>)`: closed-lost in the last 2 years, no call in the last 60 days
+- `Active – coordinate with <owner>`: a Gong call in the last 60 days. Reps must check with the
+  owner before sending.
 
-- Target list: `AWS Top 2K`, `Google Top 1K`, or `AWS Top 2K + Google Top 1K`
-- SF Owner: account owner name; "Salesforce Notifications" means `Unassigned`
-- Status: `Not sent`
+End each brief with one concrete **recommended next step**. For example: go to the person a call
+named as the decision-maker, or re-open on the timing from the loss reason.
 
-### 7. Report back
-Keep it short: the sheet link, the 10 companies, one line on the best hooks, every HOLD/VERIFY
-flag, any companies skipped and why, and ZoomInfo credits spent.
+### 7. Write to the sheet
+Two tabs:
+- **Net-new contacts** (append): `Priority | Rep | Account play | Company | Contact | Title |
+  In role since | Email | Buyer views (90d) | Buyer cos (90d) | AI-assistant visits (90d) |
+  Reviews | Category rank | 1. LinkedIn connection note | 2. LinkedIn DM | 3. Email subject |
+  3. Email body | Status`. Write the Contact cell as `=HYPERLINK("<linkedin url>","<Name>")`
+  using `update_formulas`. With no URL, link a LinkedIn people search
+  (`https://www.linkedin.com/search/results/people/?keywords=<Name> <Company>`) labelled
+  "<Name> (search)". Rep: account owner; "Salesforce Notifications" means `UNASSIGNED`.
+  Status: `Not sent`.
+- **Account briefs** (append or update the row for that company): `Company | Rep | Account play |
+  Target list | Salesforce opportunities | Last real conversation | Already in Salesforce
+  (don't cold-pitch) | Recommended next step`.
+
+### 8. Report back
+Keep it short: the sheet link, the 10 companies with their account play, which accounts are
+UNASSIGNED, any VERIFY flags, any companies skipped and why, and ZoomInfo credits spent.
 
 ## Guardrails
 - **Never send** LinkedIn messages, connection requests, or emails. Humans review and send.

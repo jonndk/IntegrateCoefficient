@@ -84,10 +84,55 @@ ORDER BY 1, rn;
 
 
 -- =====================================================================
--- Query 3: are the chosen contacts already in Salesforce?
+-- Query 3: net-new check. Any hit = NOT net-new, pick another contact.
+-- One row per candidate: (company name, email domain, first name, last name).
 -- =====================================================================
-SELECT account_name, first_name, last_name, contact_title,
-       linked_in_profile_url_c, last_activity_date, left_the_company_c
-FROM dim.sf_contact
+WITH p(co, dom, fn, ln) AS (SELECT * FROM VALUES
+  ('<Company>', '<domain.com>', '<First>', '<Last>'))
+SELECT p.co, p.fn || ' ' || p.ln AS who,
+  (SELECT COUNT(*) FROM dim.sf_contact c
+    WHERE LOWER(c.last_name) = LOWER(p.ln) AND LOWER(c.first_name) LIKE LOWER(LEFT(p.fn, 3)) || '%'
+      AND (c.account_name ILIKE p.co || '%' OR c.email ILIKE '%' || p.dom)) AS in_contacts,
+  (SELECT COUNT(*) FROM dim.sf_lead l
+    WHERE LOWER(l.last_name) = LOWER(p.ln) AND LOWER(l.first_name) LIKE LOWER(LEFT(p.fn, 3)) || '%'
+      AND (l.company ILIKE p.co || '%' OR l.email ILIKE '%' || p.dom)) AS in_leads,
+  (SELECT COUNT(*) FROM dim.gong_call_participant g
+    WHERE g.participant_name ILIKE '%' || p.ln || '%' AND g.email ILIKE '%' || p.dom) AS on_gong
+FROM p;
+
+
+-- =====================================================================
+-- Query 4a: account brief - opportunities
+-- =====================================================================
+SELECT a.account_name, o.sf_opportunity_name, o.stage_name, o.opportunity_amount_usd,
+       o.created_date::date AS created, o.close_date, o.loss_reason, o.next_step, o.owner_name
+FROM dim.sf_opportunity o JOIN dim.sf_account a ON a.account_id = o.account_id
+WHERE a.account_name IN ('<company 1>', '<company 2>')
+ORDER BY a.account_name, o.created_date DESC;
+
+
+-- =====================================================================
+-- Query 4b: account brief - recent Gong calls with external attendees and AI summary
+-- =====================================================================
+SELECT a.account_name, g.call_start_datetime::date AS dt, g.title, g.owner_name,
+       LISTAGG(DISTINCT p.participant_name || COALESCE(' (' || NULLIF(p.title, '') || ')', ''), '; ') AS external_people,
+       ANY_VALUE(g.ai_summary_brief) AS summary, ANY_VALUE(g.ai_next_steps) AS next_steps
+FROM dim.gong_call g
+JOIN dim.sf_account a ON a.account_id = g.sf_account_id
+LEFT JOIN dim.gong_call_participant p ON p.call_id = g.call_id AND NOT COALESCE(p.is_internal, FALSE)
+WHERE a.account_name IN ('<company 1>', '<company 2>')
+  AND g.call_start_datetime >= DATEADD(year, -1, CURRENT_DATE)
+GROUP BY 1, 2, 3, 4
+ORDER BY 1, 2 DESC;
+
+
+-- =====================================================================
+-- Query 4c: account brief - activity volume (mostly automated email) in the last 90 days
+-- =====================================================================
+SELECT account_name, owner_name, task_type, COUNT(*) AS n, COUNT(DISTINCT who_name) AS people,
+       MAX(activity_date) AS last_dt, ANY_VALUE(subject) AS sample_subject
+FROM dim.sf_task
 WHERE account_name IN ('<company 1>', '<company 2>')
-  AND (first_name || ' ' || last_name) IN ('<First Last>', '<First Last>');
+  AND activity_date >= DATEADD(day, -90, CURRENT_DATE)
+GROUP BY 1, 2, 3
+ORDER BY 1, n DESC;
